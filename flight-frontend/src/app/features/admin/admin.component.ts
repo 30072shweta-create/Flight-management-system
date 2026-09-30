@@ -96,7 +96,11 @@ export class AdminDashboardComponent implements OnInit {
 
     this.bookingsService.getAllBookings().subscribe({
       next: (data) => {
-        this.bookings = data || [];
+        this.bookings = (data || []).sort((a, b) => {
+          const tA = a.bookingTs ? new Date(a.bookingTs).getTime() : a.bookingId;
+          const tB = b.bookingTs ? new Date(b.bookingTs).getTime() : b.bookingId;
+          return tB - tA;
+        });
         if (this.bookings.length > 0) {
           this.processBookingTrends(this.bookings);
         }
@@ -125,9 +129,23 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   public get totalRevenue(): number {
-    return this.payments
-      .filter((p) => p.status === 'PAID')
-      .reduce((acc, p) => acc + (p.amount || 0), 0);
+    const fromPayments = this.payments
+      .filter((p) => {
+        const s = (p.status || '').toUpperCase();
+        return s === 'PAID' || s === 'SUCCESS' || s === 'COMPLETED';
+      })
+      .reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
+
+    if (fromPayments > 0) {
+      return fromPayments;
+    }
+
+    return this.bookings
+      .filter((b) => {
+        const s = (b.paymentStatus || b.status || '').toUpperCase();
+        return s === 'PAID' || s === 'SUCCESS' || s === 'CONFIRMED';
+      })
+      .reduce((acc, b) => acc + (Number(b.totalAmount) || 0), 0);
   }
 
   public get monthlyProgressPercent(): number {
@@ -142,19 +160,35 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   public get popularRoutes(): PopularRoute[] {
-    if (this.flights.length === 0) {
-      return [];
+    const routeCounts = new Map<string, { count: number; origin: string; dest: string }>();
+
+    // Check actual booking segments first
+    if (this.bookings && this.bookings.length > 0) {
+      for (const b of this.bookings) {
+        if (b.segments && b.segments.length > 0) {
+          for (const s of b.segments) {
+            if (s.fromAirport && s.toAirport) {
+              const key = `${s.fromAirport} - ${s.toAirport}`;
+              const curr = routeCounts.get(key) || { count: 0, origin: s.fromAirport, dest: s.toAirport };
+              curr.count++;
+              routeCounts.set(key, curr);
+            }
+          }
+        }
+      }
     }
 
-    // Group flights by route
-    const map = new Map<string, { count: number; origin: string; dest: string }>();
-    for (const f of this.flights) {
-      const key = `${f.fromAirport} - ${f.toAirport}`;
-      const current = map.get(key) || { count: 0, origin: f.fromAirport, dest: f.toAirport };
-      current.count++;
-      map.set(key, current);
+    // Fallback to registered flight routes if bookings don't have segments populated
+    if (routeCounts.size === 0 && this.flights.length > 0) {
+      for (const f of this.flights) {
+        const key = `${f.fromAirport} - ${f.toAirport}`;
+        const current = routeCounts.get(key) || { count: 0, origin: f.fromAirport, dest: f.toAirport };
+        current.count++;
+        routeCounts.set(key, current);
+      }
     }
-    const sorted = Array.from(map.values()).sort((a, b) => b.count - a.count).slice(0, 4);
+
+    const sorted = Array.from(routeCounts.values()).sort((a, b) => b.count - a.count).slice(0, 4);
     if (sorted.length === 0) {
       return [];
     }
@@ -177,7 +211,7 @@ export class AdminDashboardComponent implements OnInit {
   public get chartCoordinates() {
     const points = this.bookingTrends;
     if (!points || points.length === 0) {
-      return { path: '', areaPath: '', points: [], minVal: 0, maxVal: 100 };
+      return { path: '', areaPath: '', points: [], minVal: 0, maxVal: 20, yAxisLabels: [20, 13, 7] };
     }
 
     const svgWidth = 620;
@@ -188,8 +222,9 @@ export class AdminDashboardComponent implements OnInit {
     const height = svgHeight - paddingY * 2;
 
     const values = points.map((p) => p.bookings);
-    const minVal = Math.min(...values, 20);
-    const maxVal = Math.max(...values, 100);
+    const maxBookings = Math.max(...values, 0);
+    const maxVal = Math.max(maxBookings + Math.max(1, Math.ceil(maxBookings * 0.2)), 5);
+    const minVal = 0;
     const range = maxVal - minVal || 1;
 
     const coords = points.map((p, index) => {
@@ -207,16 +242,52 @@ export class AdminDashboardComponent implements OnInit {
     const last = coords[coords.length - 1];
     const areaD = `${pathD} L ${last.x} ${svgHeight - paddingY} L ${first.x} ${svgHeight - paddingY} Z`;
 
+    const yAxisLabels = [
+      Math.round(maxVal * 0.95),
+      Math.round(maxVal * 0.65),
+      Math.round(maxVal * 0.35)
+    ];
+
     return {
       path: pathD,
       areaPath: areaD,
       points: coords,
       minVal,
-      maxVal
+      maxVal,
+      yAxisLabels
     };
   }
 
+  public get recentBookings(): BookingResponseDTO[] {
+    return this.bookings.slice(0, 5);
+  }
 
+  public getPassengerName(b: BookingResponseDTO): string {
+    if (b.passengers && b.passengers.length > 0) {
+      const p = b.passengers[0];
+      const fullName = `${p.firstName || ''} ${p.lastName || ''}`.trim();
+      if (fullName) {
+        return fullName;
+      }
+    }
+    return `User #${b.userId}`;
+  }
+
+  public getPassengerInfo(b: BookingResponseDTO): string {
+    const parts: string[] = [];
+    if (b.passengers && b.passengers.length > 0) {
+      const p = b.passengers[0];
+      if (p.seatNumber) {
+        parts.push(`Seat ${p.seatNumber}`);
+      }
+      if (b.passengers.length > 1) {
+        parts.push(`+${b.passengers.length - 1} more`);
+      }
+    } else {
+      parts.push(`User #${b.userId}`);
+    }
+    return parts.join(' · ');
+  }
 
   private processBookingTrends(bookings: BookingResponseDTO[]): void {
     const countsByDate = new Map<string, number>();
@@ -227,19 +298,32 @@ export class AdminDashboardComponent implements OnInit {
       }
     }
 
-    if (countsByDate.size >= 5) {
-      const points: BookingTrendPoint[] = [];
-      const sortedKeys = Array.from(countsByDate.keys()).sort();
-      for (const k of sortedKeys.slice(-30)) {
-        const d = new Date(k + 'T00:00:00');
-        points.push({
-          date: k,
-          dayLabel: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-          bookings: countsByDate.get(k) || 0
-        });
+    let endDate = new Date();
+    const sortedKeys = Array.from(countsByDate.keys()).sort();
+    if (sortedKeys.length > 0) {
+      const latestBookingDate = new Date(sortedKeys[sortedKeys.length - 1] + 'T00:00:00');
+      if (latestBookingDate > endDate) {
+        endDate = latestBookingDate;
       }
-      this.bookingTrends = points;
     }
+
+    const points: BookingTrendPoint[] = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(endDate);
+      d.setDate(d.getDate() - i);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const dateKey = `${yyyy}-${mm}-${dd}`;
+      const count = countsByDate.get(dateKey) || 0;
+      points.push({
+        date: dateKey,
+        dayLabel: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        bookings: count
+      });
+    }
+
+    this.bookingTrends = points;
   }
 
   private handleError(err: any): void {
@@ -247,7 +331,6 @@ export class AdminDashboardComponent implements OnInit {
     if (err.status === 403) {
       this.errorMessage = 'You do not have permission to access the admin dashboard.';
     } else if (err.status === 0) {
-      // Backend is offline; keep fallback telemetry active without loud error banner
       console.warn('Backend server offline. Displaying local telemetry preview.');
     } else {
       this.errorMessage = err.error?.message || err.error || 'Failed to load dashboard data.';

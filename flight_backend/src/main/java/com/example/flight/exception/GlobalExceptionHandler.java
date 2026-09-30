@@ -81,7 +81,9 @@ public class GlobalExceptionHandler {
             PaymentNotAllowedException.class,
             CancellationNotAllowedException.class,
             RefundNotAllowedException.class,
-            RefundFailedException.class
+            RefundFailedException.class,
+            IllegalStateException.class,
+            IllegalArgumentException.class
     })
     public ResponseEntity<ErrorResponse> handlePaymentBadRequestExceptions(
             RuntimeException ex,

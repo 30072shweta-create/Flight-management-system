@@ -671,9 +671,21 @@ $shadow-hover: 0 6px 18px rgba(16, 26, 43, 0.06);
   &--scheduled { background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD; }
   &--boarding { background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A; }
   &--departed { background: #E8EEFF; color: $primary-navy; border: 1px solid #C4D4FF; }
-  &--arrived, &--completed, &--paid, &--confirmed { background: #E6F6ED; color: #1A6B3C; border: 1px solid #B7E4C7; }
-  &--delayed, &--pending { background: #FFF7ED; color: #C2410C; border: 1px solid #FED7AA; }
-  &--cancelled, &--failed, &--expired { background: #FDE8E8; color: #BA1A1A; border: 1px solid #F8B4B4; }
+  &--arrived, &--completed, &--paid, &--confirmed, &--success { background: #E6F6ED; color: #1A6B3C; border: 1px solid #B7E4C7; }
+  &--delayed, &--pending, &--requested { background: #FFF7ED; color: #C2410C; border: 1px solid #FED7AA; }
+  &--cancelled, &--failed, &--expired, &--refunded { background: #FDE8E8; color: #BA1A1A; border: 1px solid #F8B4B4; }
+}
+
+.passenger-name-primary {
+  font-weight: 600;
+  color: $primary-navy;
+}
+
+.sub-label-dim {
+  font-family: monospace;
+  font-size: 0.72rem;
+  color: $text-muted;
+  margin-top: 2px;
 }
 
 .font-mono {

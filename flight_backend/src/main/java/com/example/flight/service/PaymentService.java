@@ -364,7 +364,7 @@ private final NotificationService notificationService;
     public List<PaymentResponseDTO> getAllPayments() {
 
         return paymentRepository
-                .findAll()
+                .findAllByOrderByPaymentIdDesc()
                 .stream()
                 .map(this::convertToResponse)
                 .toList();

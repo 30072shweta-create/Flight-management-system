@@ -60,7 +60,7 @@ public class BookingService {
     // =========================================================
     @Transactional(readOnly = true)
     public List<BookingResponseDTO> getAllBookings() {
-        return bookingRepository.findAll()
+        return bookingRepository.findAllByOrderByBookingIdDesc()
                 .stream()
                 .map(this::convertToResponse)
                 .toList();

@@ -138,9 +138,9 @@
             <line x1="25" y1="165" x2="595" y2="165" class="baseline" />
 
             <!-- Y-Axis Labels -->
-            <text x="28" y="32" class="chart-axis-label">95</text>
-            <text x="28" y="82" class="chart-axis-label">65</text>
-            <text x="28" y="132" class="chart-axis-label">35</text>
+            <text x="28" y="32" class="chart-axis-label">{{ chartCoordinates.yAxisLabels[0] }}</text>
+            <text x="28" y="82" class="chart-axis-label">{{ chartCoordinates.yAxisLabels[1] }}</text>
+            <text x="28" y="132" class="chart-axis-label">{{ chartCoordinates.yAxisLabels[2] }}</text>
 
             <!-- Gradient Area -->
             <path [attr.d]="chartCoordinates.areaPath" fill="url(#bookingAreaGrad)" />
@@ -285,12 +285,22 @@
               </tr>
             </thead>
             <tbody>
-              @for (b of bookings.slice(0, 5); track b.bookingId) {
+              @for (b of recentBookings; track b.bookingId) {
                 <tr>
-                  <td><strong class="font-mono">{{ b.bookingCode }}</strong></td>
-                  <td>User #{{ b.userId }}</td>
-                  <td class="font-mono">₹{{ b.totalAmount }}</td>
-                  <td><span class="status-tag status-tag--{{ b.status | lowercase }}">{{ b.status }}</span></td>
+                  <td>
+                    <strong class="font-mono">{{ b.bookingCode }}</strong>
+                    <div class="sub-label-dim">{{ b.bookingTs | date:'shortDate' }}</div>
+                  </td>
+                  <td>
+                    <div class="passenger-name-primary">{{ getPassengerName(b) }}</div>
+                    <div class="sub-label-dim">{{ getPassengerInfo(b) }}</div>
+                  </td>
+                  <td class="font-mono">₹{{ b.totalAmount | number:'1.0-2' }}</td>
+                  <td>
+                    <span class="status-tag status-tag--{{ (b.paymentStatus || b.status) | lowercase }}">
+                      {{ b.paymentStatus || b.status }}
+                    </span>
+                  </td>
                 </tr>
               }
               @if (bookings.length === 0 && !isLoading) {

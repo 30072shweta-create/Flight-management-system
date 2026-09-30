@@ -133,6 +133,20 @@
 
           <hr class="divider" />
 
+          <h4>Passengers</h4>
+          <div class="passengers-list" *ngIf="selectedBooking.passengers && selectedBooking.passengers.length > 0; else noPax">
+            <ul>
+              <li *ngFor="let p of selectedBooking.passengers">
+                <strong>{{ p.firstName }} {{ p.lastName }}</strong> &middot; Seat: {{ p.seatNumber || 'Unassigned' }} &middot; Passport: {{ p.passportNumber || 'N/A' }}
+              </li>
+            </ul>
+          </div>
+          <ng-template #noPax>
+            <p class="text-muted">No individual passenger manifest registered.</p>
+          </ng-template>
+
+          <hr class="divider" />
+
           <h4>Flight Segments</h4>
           <div class="segment-card" *ngFor="let seg of selectedBooking.segments">
             <div class="segment-header">

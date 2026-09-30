@@ -23,6 +23,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByFlightFlightId(Long flightId);
 
+    List<Booking> findAllByOrderByBookingIdDesc();
+
     @Query("SELECT DISTINCT b FROM Booking b LEFT JOIN FETCH b.user LEFT JOIN FETCH b.flight f LEFT JOIN FETCH f.airline LEFT JOIN FETCH f.fromAirport LEFT JOIN FETCH f.toAirport LEFT JOIN FETCH f.aircraft LEFT JOIN FETCH b.segments s LEFT JOIN FETCH s.flight sf LEFT JOIN FETCH sf.airline LEFT JOIN FETCH sf.fromAirport LEFT JOIN FETCH sf.toAirport WHERE b.bookingId = :bookingId")
     Optional<Booking> findByIdWithDetails(@Param("bookingId") Long bookingId);
 

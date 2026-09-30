@@ -1,5 +1,5 @@
 export type PaymentMethod = 'RAZORPAY' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'NET_BANKING' | 'UPI' | 'WALLET';
-export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
+export type PaymentStatus = 'PENDING' | 'PAID' | 'SUCCESS' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
 
 export interface PaymentRequestDTO {
   bookingId: number;

@@ -36,6 +36,7 @@ export class BookingDetailComponent implements OnInit {
   public showCancelModal = false;
   public cancelReason = 'User requested cancellation';
   public isCancelling = false;
+  public cancelErrorMessage = '';
   public copiedPnr = false;
 
   public get displayPassengers(): PassengerResponseDTO[] {
@@ -251,16 +252,19 @@ export class BookingDetailComponent implements OnInit {
   }
 
   public openCancelModal(): void {
+    this.cancelErrorMessage = '';
     this.showCancelModal = true;
   }
 
   public closeCancelModal(): void {
     this.showCancelModal = false;
+    this.cancelErrorMessage = '';
   }
 
   public cancelBooking(): void {
     if (!this.booking) return;
     this.isCancelling = true;
+    this.cancelErrorMessage = '';
 
     this.bookingsService.cancelBooking(this.booking.bookingId, {
       bookingId: this.booking.bookingId,
@@ -276,7 +280,7 @@ export class BookingDetailComponent implements OnInit {
       },
       error: (err) => {
         this.isCancelling = false;
-        this.errorMessage = err.error?.message || 'Cancellation failed. Please try again.';
+        this.cancelErrorMessage = err.error?.message || err.error || 'Cancellation failed. Please try again.';
       }
     });
   }

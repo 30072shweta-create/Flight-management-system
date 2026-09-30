@@ -159,6 +159,20 @@ export class FlightListComponent implements OnInit {
     return { city: code || 'Select', code: code || '', name: 'Airport Selection' };
   }
 
+  public get modifySearchParams(): any {
+    const val = this.filterForm.value;
+    const params: any = {};
+    if (val.source) params.source = val.source;
+    if (val.destination) params.destination = val.destination;
+    if (val.date) params.date = val.date;
+    if (val.returnDate && this.isRoundTrip) params.returnDate = val.returnDate;
+    if (val.tripType) params.tripType = val.tripType;
+    if (val.cabinClass) params.cabinClass = val.cabinClass;
+    if (val.passengers) params.passengers = val.passengers;
+    if (val.airline) params.airline = val.airline;
+    return params;
+  }
+
   public onSearchSubmit(): void {
     if (!this.validateDates()) {
       return;

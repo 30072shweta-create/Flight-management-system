@@ -61,7 +61,6 @@ public class Booking {
     )
     private String bookingCode;
 
-    @Enumerated(EnumType.STRING)
     @Column(
             name = "status",
             length = 50,
@@ -69,7 +68,6 @@ public class Booking {
     )
     private BookingStatus status;
 
-    @Enumerated(EnumType.STRING)
     @Column(
             name = "payment_status",
             length = 50,

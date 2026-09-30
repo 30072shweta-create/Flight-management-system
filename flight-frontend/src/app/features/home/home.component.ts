@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { AirportsService } from '../../core/services/airports.service';
 import { AirlinesService } from '../../core/services/airlines.service';
 import { FlightsService } from '../../core/services/flights.service';
@@ -20,6 +20,7 @@ export class HomeComponent implements OnInit {
   private airlinesService = inject(AirlinesService);
   private flightsService = inject(FlightsService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   public airports: AirportResponseDTO[] = [];
   public airlines: AirlineResponseDTO[] = [];
@@ -73,6 +74,23 @@ export class HomeComponent implements OnInit {
     // Listen to date changes to validate departure vs return
     this.searchForm.get('date')?.valueChanges.subscribe(() => this.validateDates());
     this.searchForm.get('returnDate')?.valueChanges.subscribe(() => this.validateDates());
+
+    // Prepopulate form if returning from flight results via "Modify Search"
+    this.route.queryParams.subscribe((params) => {
+      if (params['source'] || params['destination'] || params['date']) {
+        this.searchForm.patchValue({
+          source: params['source'] || '',
+          destination: params['destination'] || '',
+          date: params['date'] || depDateStr,
+          returnDate: params['returnDate'] || retDateStr,
+          tripType: params['tripType'] || (params['returnDate'] ? 'roundTrip' : 'oneWay'),
+          airline: params['airline'] || '',
+          cabinClass: params['cabinClass'] || 'ECONOMY',
+          passengers: params['passengers'] ? Number(params['passengers']) : 1
+        });
+        this.validateDates();
+      }
+    });
   }
 
   private loadAirlines(): void {

@@ -28,6 +28,13 @@ public class DatabaseCompatibilityConfig {
                     + "SET payment_method = UPPER(payment_method) "
                     + "WHERE payment_method IS NOT NULL AND payment_method <> UPPER(payment_method)");
 
+            jdbcTemplate.execute("UPDATE flight_booking_system.bookings "
+                    + "SET status = UPPER(status) "
+                    + "WHERE status IS NOT NULL AND status <> UPPER(status)");
+            jdbcTemplate.execute("UPDATE flight_booking_system.bookings "
+                    + "SET payment_status = UPPER(payment_status) "
+                    + "WHERE payment_status IS NOT NULL AND payment_status <> UPPER(payment_status)");
+
             jdbcTemplate.execute("ALTER TABLE IF EXISTS flight_booking_system.flight_pricing "
                     + "ADD COLUMN IF NOT EXISTS tax NUMERIC(12, 2) NOT NULL DEFAULT 0");
             jdbcTemplate.execute("ALTER TABLE IF EXISTS flight_booking_system.flight_pricing "
